@@ -74,6 +74,8 @@ SdoRead(const uint8_t number, uint32_t *can_id, uint8_t *code, uint16_t *index, 
 
 void EnableSpeedMode(const uint8_t number, const uint32_t can_id);
 
+void EnablePositionMode(const uint8_t number, const uint32_t can_id);
+
 /**
  * 使用RPDO1映射速度设置，实现实时控制
  * */
@@ -91,12 +93,16 @@ void SetSpeed(const uint8_t number, const uint32_t can_id, const int32_t value);
  * 调用 SetSpeed(1, RPDO1_ID(2), 1000, -1000);
  * */
 void SetSpeed(const uint8_t number, const uint32_t can_id, const int32_t l_value, const int32_t r_value);
+
+void SetRelativePosition(const uint8_t number, const uint32_t can_id, const int32_t l_value, const int32_t r_value);
 #endif
 
 /**
  * 获取左右电机速度， 中菱的单位为 0.1rpm
  * */
 void GetSpeed(const uint8_t number, const uint32_t can_id, int32_t *l_value, int32_t *r_value);
+
+void GetRealPosition(const uint8_t number, const uint32_t can_id, int32_t *l_value, int32_t *r_value);
 
 #ifdef __cplusplus
 };

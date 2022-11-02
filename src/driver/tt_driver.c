@@ -35,6 +35,45 @@ SdoRead(const uint8_t number, uint32_t *can_id, uint8_t *code, uint16_t *index, 
   *data = *((uint32_t *) &buffer[4]);
 }
 
+void EnablePositionMode(const uint8_t number, const uint32_t can_id){
+    uint32_t read_can_id;
+  uint8_t read_code;
+  uint16_t read_index;
+  uint8_t read_sub_index;
+  uint32_t read_data;
+#if DRIVER_TYPE == TT_DRIVER
+#elif DRIVER_TYPE == ZL_DRIVER
+  // 设置位置模式
+  SdoWrite(number, can_id, WRITE_1_BYTE, 0x6060, 0x00, 0x01);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index, &read_data);
+  // 设置左电机 S形加速时间为100ms
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x6083, 0x01, 0x64);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index, &read_data);
+  // 设置右电机 S形加速时间为100ms
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x6083, 0x02, 0x64);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index, &read_data);
+  // 设置左电机 S形减速时间为100ms
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x6084, 0x01, 0x64);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index, &read_data);
+  // 设置右电机 S形减速时间为100ms
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x6084, 0x02, 0x64);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index, &read_data);
+  // 设置左电机 最大速度60rpm
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x6081, 0x01, 0x3C);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index, &read_data);
+  // 设置右电机 最大速度60rpm
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x6081, 0x02, 0x3C);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index, &read_data);
+  // 使能
+  SdoWrite(number, can_id, WRITE_2_BYTES, 0x6040, 0x00, 0x06);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index, &read_data);
+  SdoWrite(number, can_id, WRITE_2_BYTES, 0x6040, 0x00, 0x07);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index, &read_data);
+  SdoWrite(number, can_id, WRITE_2_BYTES, 0x6040, 0x00, 0x0F);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index, &read_data);
+#endif
+}
+
 void EnableSpeedMode(const uint8_t number, const uint32_t can_id) {
   uint32_t read_can_id;
   uint8_t read_code;
@@ -147,6 +186,25 @@ void SetSpeed(const uint8_t number, const uint32_t can_id, const int32_t l_value
   *((int32_t *) &buffer[4]) = r_value;
   WriteData(number, can_id, buffer, 8);
 }
+
+void SetRelativePosition(const uint8_t number, const uint32_t can_id, const int32_t l_value, const int32_t r_value){
+  uint32_t read_can_id;
+  uint8_t read_code;
+  uint16_t read_index;
+  uint8_t read_sub_index;
+  uint32_t read_data;
+  // 左电机 目标位置
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x607A, 0x01, l_value);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index, &read_data);
+  // 右电机 目标位置
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x607A, 0x02, r_value);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index, &read_data);
+  // 启动相对运动
+  SdoWrite(number, can_id, WRITE_2_BYTES, 0x6040, 0x00, 0x4F);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index, &read_data);
+  SdoWrite(number, can_id, WRITE_2_BYTES, 0x6040, 0x00, 0x5F);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index, &read_data);
+}
 #endif
 
 void ResetNode(const uint8_t number, const uint8_t node_id) {
@@ -189,6 +247,32 @@ void GetSpeed(const uint8_t number, const uint32_t can_id, int32_t *l_value, int
   buffer[3] = 2;
   WriteData(number, can_id, buffer, 8);
 //  CanDelayMs(500);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index, (uint32_t *) &value);
+//  printf("id = %X", read_can_id);
+  if (read_sub_index == 1) {
+    *l_value = value;
+  } else if (read_sub_index == 2) {
+    *r_value = value;
+  }
+}
+
+void GetRealPosition(const uint8_t number, const uint32_t can_id, int32_t *l_value, int32_t *r_value){
+  uint8_t buffer[8] = {0x40, 0x64, 0X60, 0x01, 0, 0, 0, 0};
+  uint32_t read_can_id;
+  uint8_t read_code;
+  uint16_t read_index;
+  uint8_t read_sub_index;
+  int32_t value;
+  WriteData(number, can_id, buffer, 8);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index, (uint32_t *) &value);
+//  printf("id = %X", read_can_id);
+  if (read_sub_index == 1) {
+    *l_value = value;
+  } else if (read_sub_index == 2) {
+    *r_value = value;
+  }
+  buffer[3] = 2;
+  WriteData(number, can_id, buffer, 8);
   SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index, (uint32_t *) &value);
 //  printf("id = %X", read_can_id);
   if (read_sub_index == 1) {
