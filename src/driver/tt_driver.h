@@ -38,17 +38,17 @@
 #define HEARTBEAT_ID(id) (id + 0x700)
 #define SDO_RX_ID(id) (id + 0x600)
 #define SDO_TX_ID(id) (id + 0x580)
-#define TPDO1_ID(id)  (id + 0x180)
-#define TPDO2_ID(id)  (id + 0x280)
-#define TPDO3_ID(id)  (id + 0x380)
-#define TPDO4_ID(id)  (id + 0x480)
-#define RPDO1_ID(id)  (id + 0x200)
-#define RPDO2_ID(id)  (id + 0x300)
-#define RPDO3_ID(id)  (id + 0x400)
-#define RPDO4_ID(id)  (id + 0x500)
+#define TPDO1_ID(id) (id + 0x180)
+#define TPDO2_ID(id) (id + 0x280)
+#define TPDO3_ID(id) (id + 0x380)
+#define TPDO4_ID(id) (id + 0x480)
+#define RPDO1_ID(id) (id + 0x200)
+#define RPDO2_ID(id) (id + 0x300)
+#define RPDO3_ID(id) (id + 0x400)
+#define RPDO4_ID(id) (id + 0x500)
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 /**
@@ -57,20 +57,22 @@ extern "C"{
 
 void CanDelayMs(const uint32_t count);
 
-void
-WriteData(const uint8_t number, const uint32_t can_id, const uint8_t *data, const uint8_t size);
+void WriteData(const uint8_t number, const uint32_t can_id, const uint8_t *data,
+               const uint8_t size);
 
-void ReadData(const uint8_t number, uint32_t *can_id, uint8_t *data, uint8_t *size);
+void ReadData(const uint8_t number, uint32_t *can_id, uint8_t *data,
+              uint8_t *size);
 
 void ResetNode(const uint8_t number, const uint8_t node_id);
 
 void StartNode(const uint8_t number, const uint8_t node_id);
 
-void SdoWrite(const uint8_t number, const uint32_t can_id, const uint8_t code, const uint16_t index,
-              const uint8_t sub_index, const uint32_t data);
+void SdoWrite(const uint8_t number, const uint32_t can_id, const uint8_t code,
+              const uint16_t index, const uint8_t sub_index,
+              const uint32_t data);
 
-void
-SdoRead(const uint8_t number, uint32_t *can_id, uint8_t *code, uint16_t *index, uint8_t *sub_index, uint32_t *data);
+void SdoRead(const uint8_t number, uint32_t *can_id, uint8_t *code,
+             uint16_t *index, uint8_t *sub_index, uint32_t *data);
 
 void EnableSpeedMode(const uint8_t number, const uint32_t can_id);
 
@@ -90,22 +92,57 @@ void SetSpeed(const uint8_t number, const uint32_t can_id, const int32_t value);
 #elif DRIVER_TYPE == ZL_DRIVER
 /**
  * 中菱单位是1rpm
- * 调用 SetSpeed(1, RPDO1_ID(2), 1000, -1000);
+ * 调用 SetSpeed(0, RPDO1_ID(2), 1000, -1000);
  * */
-void SetSpeed(const uint8_t number, const uint32_t can_id, const int32_t l_value, const int32_t r_value);
+void SetSpeed(const uint8_t number, const uint32_t can_id,
+              const int32_t l_value, const int32_t r_value);
 
-void SetRelativePosition(const uint8_t number, const uint32_t can_id, const int32_t l_value, const int32_t r_value);
+/**
+ * @brief Set the Relative Position object
+ *
+ * @param number can设备标号
+ * @param can_id can ID
+ * @param l_value 左电机的脉冲数
+ * @param r_value 右电机的脉冲数
+ */
+void SetRelativePosition(const uint8_t number, const uint32_t can_id,
+                         const int32_t l_value, const int32_t r_value);
+
+/**
+ * @brief Get the Status object
+ *
+ * @param number can设备标号
+ * @param can_id can ID
+ * @param l_value 左电机的状态字的指针
+ * @param r_value 右电机的状态字的指针
+ * @return int 0： 成功 -1： 失败
+ */
+int GetStatus(const uint8_t number, const uint32_t can_id, uint16_t *l_value,
+              uint16_t *r_value);
+
+void ClearError(const uint8_t number, const uint32_t can_id);
+
 #endif
 
 /**
  * 获取左右电机速度， 中菱的单位为 0.1rpm
  * */
-void GetSpeed(const uint8_t number, const uint32_t can_id, int32_t *l_value, int32_t *r_value);
+void GetSpeed(const uint8_t number, const uint32_t can_id, int32_t *l_value,
+              int32_t *r_value);
 
-void GetRealPosition(const uint8_t number, const uint32_t can_id, int32_t *l_value, int32_t *r_value);
+/**
+ * @brief Get the Real Position object
+ *
+ * @param number can设备标号
+ * @param can_id can ID
+ * @param l_value 左电机的脉冲数的指针
+ * @param r_value 右电机的脉冲数的指针
+ */
+void GetRealPosition(const uint8_t number, const uint32_t can_id,
+                     int32_t *l_value, int32_t *r_value);
 
 #ifdef __cplusplus
 };
 #endif
 
-#endif //MOTOR_DRIVER_TT_DRIVER_H
+#endif  // MOTOR_DRIVER_TT_DRIVER_H
