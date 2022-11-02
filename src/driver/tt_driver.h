@@ -13,6 +13,11 @@
 #define DRIVER_TYPE ZL_DRIVER
 #define SDO_DELAY (1)
 
+#if DRIVER_TYPE == TT_DRIVER
+#elif DRIVER_TYPE == ZL_DRIVER
+#define ENCODER_TOTAL_COUNT (0x4000)
+#endif
+
 /**
  * 主站写给从站的命令符功能码
  * */
