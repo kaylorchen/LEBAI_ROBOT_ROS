@@ -22,7 +22,7 @@ pre-up ip link set can0 type can restart-ms 1
 
 # 安装手柄相关ROS包
 ```bash
-sudo apt install ros-melodic-joy ros-melodic-joy-teleop ros-melodic-joystick-drivers
+sudo apt install ros-melodic-joy ros-melodic-teleop-twist-joy ros-melodic-joystick-drivers
 ```
 根据自己使用的ros版本，替换上面的noetic
 
