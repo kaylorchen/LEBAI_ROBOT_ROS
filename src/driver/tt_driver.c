@@ -44,6 +44,7 @@ void EnablePositionMode(const uint8_t number, const uint32_t can_id) {
   uint16_t read_index;
   uint8_t read_sub_index;
   uint32_t read_data;
+  const uint32_t _rising_falling_time = 500;
 #if DRIVER_TYPE == TT_DRIVER
 #elif DRIVER_TYPE == ZL_DRIVER
   // 设置位置模式
@@ -51,27 +52,27 @@ void EnablePositionMode(const uint8_t number, const uint32_t can_id) {
   SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
           &read_data);
   // 设置左电机 S形加速时间为100ms
-  SdoWrite(number, can_id, WRITE_4_BYTES, 0x6083, 0x01, 0x64);
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x6083, 0x01, _rising_falling_time);
   SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
           &read_data);
   // 设置右电机 S形加速时间为100ms
-  SdoWrite(number, can_id, WRITE_4_BYTES, 0x6083, 0x02, 0x64);
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x6083, 0x02, _rising_falling_time);
   SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
           &read_data);
   // 设置左电机 S形减速时间为100ms
-  SdoWrite(number, can_id, WRITE_4_BYTES, 0x6084, 0x01, 0x64);
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x6084, 0x01, _rising_falling_time);
   SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
           &read_data);
   // 设置右电机 S形减速时间为100ms
-  SdoWrite(number, can_id, WRITE_4_BYTES, 0x6084, 0x02, 0x64);
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x6084, 0x02, _rising_falling_time);
   SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
           &read_data);
   // 设置左电机 最大速度60rpm
-  SdoWrite(number, can_id, WRITE_4_BYTES, 0x6081, 0x01, 0x3C);
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x6081, 0x01, 20);
   SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
           &read_data);
   // 设置右电机 最大速度60rpm
-  SdoWrite(number, can_id, WRITE_4_BYTES, 0x6081, 0x02, 0x3C);
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x6081, 0x02, 20);
   SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
           &read_data);
   // 使能
