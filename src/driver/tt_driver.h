@@ -12,6 +12,7 @@
 #define ZL_DRIVER 1
 #define DRIVER_TYPE ZL_DRIVER
 #define SDO_DELAY (1)
+#define SAMPLING_PERIOD (5)
 
 #if DRIVER_TYPE == TT_DRIVER
 #elif DRIVER_TYPE == ZL_DRIVER

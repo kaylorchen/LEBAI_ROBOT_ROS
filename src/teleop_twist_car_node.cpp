@@ -74,8 +74,8 @@ void Callback(const geometry_msgs::Twist::ConstPtr &msg) {
   double v_r = linear + kWheelDistance * angular / 2;
   int32_t rpm_l = 30 * v_l / M_PI / kLeftWheelRadius;
   int32_t rpm_r = 30 * v_r / M_PI / kRightWheelRadius;
-  ROS_INFO("linear: %lf m/s, angular: %lf rad/s, left = %d rpm, right = %d rpm",
-           linear, angular, rpm_l, rpm_r);
+  // ROS_INFO("linear: %lf m/s, angular: %lf rad/s, left = %d rpm, right = %d rpm",
+  //          linear, angular, rpm_l, rpm_r);
   // 因为安装的问题，所以左轮速度应该取负再发送
   SetSpeed(0, RPDO1_ID(1), -rpm_l, rpm_r);
 }
@@ -136,10 +136,20 @@ int main(int argc, char **argv) {
       } else if (events[i].events & EPOLLIN) {
         int32_t _l_value, _r_value;
         GetRealtimeSpeed(0, &_l_value, &_r_value);
-        ROS_INFO("num = %d, l = %d, r = %d", num, _l_value, _r_value);
+        // 安装原因，左轮数值取反
+        _l_value = -_l_value;
+        double l_velocity = (_l_value * M_PI * kLeftWheelRadius) / 300.0;
+        double r_velocity = (_r_value * M_PI * kRightWheelRadius) / 300.0;
+        double velocity = (l_velocity + r_velocity)/2;
+        double angular_velocity = (r_velocity - l_velocity) / kWheelDistance;
+        static double x_world = 0.0, y_world = 0.0, theta = 0.0;
+        x_world += velocity*SAMPLING_PERIOD/1000.0*cos(theta);
+        y_world += velocity*SAMPLING_PERIOD/1000.0*sin(theta);
+        theta += angular_velocity*SAMPLING_PERIOD/1000.0;
+        ROS_INFO("x = %lf, y = %lf, theta = %lf", x_world, y_world, theta/M_PI*180);
+        // ROS_INFO("num = %d, l = %d, r = %d", num, _l_value, _r_value);
       }
     }
-
     ros::spinOnce();
   }
   free(events);
