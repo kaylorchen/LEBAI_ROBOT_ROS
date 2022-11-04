@@ -152,6 +152,50 @@ void EnableSpeedMode(const uint8_t number, const uint32_t can_id) {
 #endif
 }
 
+void EnableTpdo1(const uint8_t number, const uint32_t can_id) {
+  uint32_t read_can_id;
+  uint8_t read_code;
+  uint16_t read_index;
+  uint8_t read_sub_index;
+  uint32_t read_data;
+  uint32_t id = can_id - 0x600;
+#if DRIVER_TYPE == TT_DRIVER
+#elif DRIVER_TYPE == ZL_DRIVER
+  // 禁止TPDO1
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x1800, 0x01, 0x80000180 + id);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
+          &read_data);
+  // 清空TPDO1映射
+  SdoWrite(number, can_id, WRITE_1_BYTE, 0x1A00, 0x00, 0x00);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
+          &read_data);
+  // 把左反馈速度(32bits)（606C:01）映射到1A00：01
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x1A00, 0x01, 0x606C0120);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
+          &read_data);
+  // 把左反馈速度(32bits)（606C:02）映射到1A00：02
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x1A00, 0x02, 0x606C0220);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
+          &read_data);
+  // 设置TPDO1的子索引数目为2，手册中1A00：00
+  SdoWrite(number, can_id, WRITE_1_BYTE, 0x1A00, 0x00, 0x02);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
+          &read_data);
+  // 设置TPDO1的传输方式为定时器触发
+  SdoWrite(number, can_id, WRITE_1_BYTE, 0x1800, 0x02, 0xFF);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
+          &read_data);
+  // 设置定时器时间为 n ms
+  SdoWrite(number, can_id, WRITE_2_BYTES, 0x1800, 0x05, 500);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
+          &read_data);
+  // 使能TPDO1
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x1800, 0x01, 0x00000180 + id);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
+          &read_data);
+#endif
+}
+
 void EnableRpdo1(const uint8_t number, const uint32_t can_id) {
   uint32_t read_can_id;
   uint8_t read_code;
@@ -182,7 +226,7 @@ void EnableRpdo1(const uint8_t number, const uint32_t can_id) {
           &read_data);
 #elif DRIVER_TYPE == ZL_DRIVER
   // 1400的初始化的数值都是对的，不用再配置
-  // 禁止PDO1
+  // 禁止RPDO1
   SdoWrite(number, can_id, WRITE_4_BYTES, 0x1400, 0x01, 0x80000200 + id);
   SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
           &read_data);
@@ -203,7 +247,7 @@ void EnableRpdo1(const uint8_t number, const uint32_t can_id) {
   SdoWrite(number, can_id, WRITE_1_BYTE, 0x1600, 0x00, 0x02);
   SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
           &read_data);
-  // 使能PDO1
+  // 使能RPDO1
   SdoWrite(number, can_id, WRITE_4_BYTES, 0x1400, 0x01, 0x00000200 + id);
   SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
           &read_data);
@@ -254,7 +298,7 @@ void SetRelativePosition(const uint8_t number, const uint32_t can_id,
 }
 
 int GetStatus(const uint8_t number, const uint32_t can_id, uint16_t *l_value,
-               uint16_t *r_value) {
+              uint16_t *r_value) {
   uint8_t buffer[8] = {0x40, 0x41, 0X60, 0x00, 0, 0, 0, 0};
   uint32_t read_can_id;
   uint8_t read_code;
@@ -294,6 +338,16 @@ void StartNode(const uint8_t number, const uint8_t node_id) {
   uint8_t buffer[2] = {0x01, 0x01};
   buffer[1] = node_id;
   WriteData(number, 0, buffer, 2);
+}
+
+void GetRealtimeSpeed(const uint8_t number, int32_t *l_value,
+                      int32_t *r_value) {
+  int32_t buffer[2];
+  uint32_t can_id;
+  uint8_t size;
+  ReadData(number, &can_id, (uint8_t *)buffer, &size);
+  *l_value = buffer[0];
+  *r_value = buffer[1];
 }
 
 void GetSpeed(const uint8_t number, const uint32_t can_id, int32_t *l_value,
