@@ -186,7 +186,7 @@ void EnableTpdo1(const uint8_t number, const uint32_t can_id) {
   SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
           &read_data);
   // 设置定时器时间为 n ms
-  SdoWrite(number, can_id, WRITE_2_BYTES, 0x1800, 0x05, SAMPLING_PERIOD);
+  SdoWrite(number, can_id, WRITE_2_BYTES, 0x1800, 0x05, SAMPLING_PERIOD * 2);
   SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
           &read_data);
   // 使能TPDO1
