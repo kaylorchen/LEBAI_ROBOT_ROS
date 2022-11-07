@@ -15,7 +15,7 @@
 #include <unistd.h>
 #include "stdint.h"
 
-//#define CAN_DEBUG
+// #define CAN_DEBUG
 
 #ifdef __cplusplus
 extern "C" {

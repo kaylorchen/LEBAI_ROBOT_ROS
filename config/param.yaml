@@ -1,0 +1,6 @@
+kWheelbase: 0.2330
+kAverageWheelRadius: 0.0642986
+kLeftCorrectionFactor: 1.0
+kRightCorrectionFactor: 1.0
+kVelocityRpm: 3
+kDirection: -1

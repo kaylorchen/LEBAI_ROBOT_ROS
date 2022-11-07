@@ -1,11 +1,13 @@
 //
 // Created by kaylor on 10/25/22.
 //
-#include "stdio.h"
-#include <string.h>
+#include "driver_can.h"
+
 #include <stdint-gcc.h>
 #include <stdlib.h>
-#include "driver_can.h"
+#include <string.h>
+
+#include "stdio.h"
 
 int CanInit(int *can_fd, const char *device) {
   *can_fd = socket(AF_CAN, SOCK_RAW, CAN_RAW);
@@ -20,8 +22,18 @@ int CanInit(int *can_fd, const char *device) {
   struct sockaddr_can addr;
   addr.can_family = AF_CAN;
   addr.can_ifindex = ifr.ifr_ifindex;
+  /*关闭回环模式*/
+  int loopback = 0; /* 0 = disabled, 1 = enabled (default) */
+  setsockopt(*can_fd, SOL_CAN_RAW, CAN_RAW_LOOPBACK, &loopback,
+             sizeof(loopback));
+
+  /*关闭自收自发*/
+  int recv_own_msgs = 0; /* 0 = disabled (default), 1 = enabled */
+  setsockopt(*can_fd, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS, &recv_own_msgs,
+             sizeof(recv_own_msgs));
+
   // 将套接字与 can0 绑定
-  int bind_res = bind(*can_fd, (struct sockaddr *) &addr, sizeof(addr));
+  int bind_res = bind(*can_fd, (struct sockaddr *)&addr, sizeof(addr));
   if (bind_res < 0) {
     perror("bind error!");
     return -1;
@@ -38,13 +50,13 @@ void CanWrite(int *can_fd, uint32_t can_id, const uint8_t *data, uint8_t size) {
   memcpy(frame.data, data, size);
   frame.can_dlc = size;
   frame.can_id = can_id;
- int nbytes = write(*can_fd, &frame, sizeof(struct can_frame));
-  if (nbytes != sizeof(frame)){
+  int nbytes = write(*can_fd, &frame, sizeof(struct can_frame));
+  if (nbytes != sizeof(frame)) {
     fprintf(stderr, "write error, nbytes = %d\n", nbytes);
     exit(-1);
   }
 #ifdef CAN_DEBUG
-  else{
+  else {
     printf("write successful, id = %X [%d] ", can_id, size);
     for (int i = 0; i < size; ++i) {
       printf("%02X ", *(data + i));
