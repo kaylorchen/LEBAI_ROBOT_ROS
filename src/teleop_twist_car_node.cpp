@@ -78,7 +78,7 @@ const float kSquare_L = 1.0f;
 int main(int argc, char **argv) {
   InitDevice();
   EnablePositionMode(0, SDO_RX_ID(1));
-  int count = 4;
+  int count = 1;
   while (count--) {
     uint16_t l_status;
     uint16_t r_status;
@@ -100,30 +100,30 @@ int main(int argc, char **argv) {
 
     SetRelativePosition(
         0, SDO_RX_ID(1),
-        -ENCODER_TOTAL_COUNT * kSquare_L / (2 * M_PI * kWheelRadius * 0.98849),
-        ENCODER_TOTAL_COUNT * kSquare_L / (2 * M_PI * kWheelRadius * 1.01151));
+        -ENCODER_TOTAL_COUNT * 10,
+        ENCODER_TOTAL_COUNT * 10);
     do {
       GetStatus(0, SDO_RX_ID(1), &l_status, &r_status);
       ROS_INFO("l = 0x%04X, r = 0x%04X", l_status & 0x8000, r_status & 0x8000);
     } while (((l_status & 0x8000) == 0) && ((l_status & 0x8000) == 0));
 
-    // 设置左电机 最大速度3rpm
-    SdoWrite(number, can_id, WRITE_4_BYTES, 0x6081, 0x01, 1);
-    SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
-            &read_data);
-    // 设置右电机 最大速度3rpm
-    SdoWrite(number, can_id, WRITE_4_BYTES, 0x6081, 0x02, 1);
-    SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
-            &read_data);
+    // // 设置左电机 最大速度3rpm
+    // SdoWrite(number, can_id, WRITE_4_BYTES, 0x6081, 0x01, 1);
+    // SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
+    //         &read_data);
+    // // 设置右电机 最大速度3rpm
+    // SdoWrite(number, can_id, WRITE_4_BYTES, 0x6081, 0x02, 1);
+    // SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
+    //         &read_data);
 
-    SetRelativePosition(
-        0, SDO_RX_ID(1),
-        -ENCODER_TOTAL_COUNT * kWheelDistance / (8 * kWheelRadius * 0.98849),
-        -ENCODER_TOTAL_COUNT * kWheelDistance / (8 * kWheelRadius* 1.01151));
-    do {
-      GetStatus(0, SDO_RX_ID(1), &l_status, &r_status);
-      ROS_INFO("l = 0x%04X, r = 0x%04X", l_status & 0x8000, r_status & 0x8000);
-    } while (((l_status & 0x8000) == 0) && ((l_status & 0x8000) == 0));
+    // SetRelativePosition(
+    //     0, SDO_RX_ID(1),
+    //     -ENCODER_TOTAL_COUNT * kWheelDistance / (8 * kWheelRadius * 0.98849),
+    //     -ENCODER_TOTAL_COUNT * kWheelDistance / (8 * kWheelRadius* 1.01151));
+    // do {
+    //   GetStatus(0, SDO_RX_ID(1), &l_status, &r_status);
+    //   ROS_INFO("l = 0x%04X, r = 0x%04X", l_status & 0x8000, r_status & 0x8000);
+    // } while (((l_status & 0x8000) == 0) && ((l_status & 0x8000) == 0));
   }
   // ros::init(argc, argv, "listener");
   // ros::NodeHandle n;
