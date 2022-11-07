@@ -159,9 +159,9 @@ int main(int argc, char **argv) {
         x_world += velocity * SAMPLING_PERIOD / 1000.0 * cos(theta);
         y_world += velocity * SAMPLING_PERIOD / 1000.0 * sin(theta);
         theta += angular_velocity * SAMPLING_PERIOD / 1000.0;
-        // ROS_INFO("x = %lf, y = %lf, theta = %lf, v = %lf, w = %lf", x_world,
-        // y_world, theta/M_PI*180, velocity, angular_velocity); ROS_INFO("num =
-        // %d, l = %d, r = %d", num, _l_value, _r_value);
+        ROS_INFO("x = %lf, y = %lf, theta = %lf, v = %lf, w = %lf", x_world,
+        y_world, theta/M_PI*180, velocity, angular_velocity); 
+        // ROS_INFO("num = %d, l = %d, r = %d", num, _l_value, _r_value);
       }
     }
     ros::spinOnce();
