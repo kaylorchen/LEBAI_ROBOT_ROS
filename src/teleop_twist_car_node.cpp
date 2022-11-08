@@ -40,7 +40,7 @@ void InitDevice(void) {
    * 中菱电机默认是ID是1，
    * 我们这里过滤器使用过滤0x581（SDO反馈包）和0x701（心跳包）
    * **/
-  struct can_filter rfilter[3];
+  struct can_filter rfilter[4];
   rfilter[0].can_id = SDO_TX_ID(1);
   rfilter[0].can_mask = CAN_SFF_MASK;  // 标准帧 (SFF: standard frame format)
 
@@ -49,6 +49,9 @@ void InitDevice(void) {
 
   rfilter[2].can_id = TPDO1_ID(1);
   rfilter[2].can_mask = CAN_SFF_MASK;
+
+  rfilter[3].can_id = TPDO2_ID(1);
+  rfilter[3].can_mask = CAN_SFF_MASK;
   CanFiltersConfig(&can0, &rfilter, sizeof(rfilter));
 
   // 复位节点1
@@ -57,8 +60,10 @@ void InitDevice(void) {
   EnableSpeedMode(0, SDO_RX_ID(1));
   // 配置节点1的RPDO1
   EnableRpdo1(0, SDO_RX_ID(1));
-  // 配置节点1的TPDO1
-  EnableTpdo1(0, SDO_RX_ID(1));
+  /*   // 配置节点1的TPDO1
+    EnableTpdo1(0, SDO_RX_ID(1)); */
+  // 配置节点1的TPDO2
+  EnableTpdo2(0, SDO_RX_ID(1));
   // 开启节点，开启PDO模式
   StartNode(0, 1);
 }
@@ -87,8 +92,8 @@ void Callback(const geometry_msgs::Twist::ConstPtr &msg) {
   double v_r = linear + kWheelDistance * angular / 2;
   int32_t rpm_l = double2int(30.0 * v_l / M_PI / kLeftWheelRadius);
   int32_t rpm_r = double2int(30.0 * v_r / M_PI / kRightWheelRadius);
-  ROS_INFO("linear: %lf m/s, angular: %lf rad/s, left = %d rpm, right = %d rpm",
-           linear, angular, rpm_l, rpm_r);
+  // ROS_INFO("linear: %lf m/s, angular: %lf rad/s, left = %d rpm, right = %d rpm",
+  //          linear, angular, rpm_l, rpm_r);
   // 因为安装的问题，所以左轮速度应该取负再发送
   SetSpeed(0, RPDO1_ID(1), -rpm_l, rpm_r);
 }
@@ -103,6 +108,10 @@ int main(int argc, char **argv) {
   double kLeftCorrectionFactor;
   double kWheelbase;
   double kAverageWheelRadius;
+  double x_world = 0.0, y_world = 0.0, init_theta = 0.0, theta = 0.0;
+  n.param("/x_world", x_world, 0.0);
+  n.param("/y_world", y_world, 0.0);
+  n.param("/theta", init_theta, 0.0);
   n.param<double>("/kRightCorrectionFactor", kRightCorrectionFactor, 1.0);
   n.param<double>("/kLeftCorrectionFactor", kLeftCorrectionFactor, 1.0);
   n.param<double>("/kWheelbase", kWheelbase, 0.2298);
@@ -147,21 +156,26 @@ int main(int argc, char **argv) {
         close(events[i].data.fd);
         continue;
       } else if (events[i].events & EPOLLIN) {
+        static int32_t last_l_value = 0, last_r_value = 0;
+        int32_t delta_l, delta_r;
         int32_t _l_value, _r_value;
-        GetRealtimeSpeed(0, &_l_value, &_r_value);
+        GetRealtimePosition(0, 1, &_l_value, &_r_value);
         // 安装原因，左轮数值取反
         _l_value = -_l_value;
-        double l_velocity = (_l_value * M_PI * kLeftWheelRadius) / 300.0;
-        double r_velocity = (_r_value * M_PI * kRightWheelRadius) / 300.0;
-        double velocity = (l_velocity + r_velocity) / 2;
-        double angular_velocity = (r_velocity - l_velocity) / kWheelDistance;
-        static double x_world = 0.0, y_world = 0.0, theta = 0.0;
-        x_world += velocity * SAMPLING_PERIOD / 1000.0 * cos(theta);
-        y_world += velocity * SAMPLING_PERIOD / 1000.0 * sin(theta);
-        theta += angular_velocity * SAMPLING_PERIOD / 1000.0;
-        ROS_INFO("x = %lf, y = %lf, theta = %lf, v = %lf, w = %lf", x_world,
-        y_world, theta/M_PI*180, velocity, angular_velocity); 
-        // ROS_INFO("num = %d, l = %d, r = %d", num, _l_value, _r_value);
+        delta_l = _l_value - last_l_value;
+        delta_r = _r_value - last_r_value;
+        last_l_value = _l_value;
+        last_r_value = _r_value;
+
+        theta = init_theta + 2 * M_PI * kAverageWheelRadius * (_r_value - _l_value) /
+                 (kWheelbase * ENCODER_TOTAL_COUNT);
+        x_world += M_PI * kAverageWheelRadius * (delta_r + delta_l) *
+                   cos(theta) / ENCODER_TOTAL_COUNT;
+        y_world += M_PI * kAverageWheelRadius * (delta_r + delta_l) *
+                   sin(theta) / ENCODER_TOTAL_COUNT;
+
+        ROS_INFO("x = %lf, y = %lf, theta = %lf, l = %d, r = %d", x_world,
+                 y_world, theta / M_PI * 180, _l_value, _r_value);
       }
     }
     ros::spinOnce();

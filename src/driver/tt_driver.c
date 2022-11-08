@@ -196,6 +196,50 @@ void EnableTpdo1(const uint8_t number, const uint32_t can_id) {
 #endif
 }
 
+void EnableTpdo2(const uint8_t number, const uint32_t can_id) {
+  uint32_t read_can_id;
+  uint8_t read_code;
+  uint16_t read_index;
+  uint8_t read_sub_index;
+  uint32_t read_data;
+  uint32_t id = can_id - 0x600;
+#if DRIVER_TYPE == TT_DRIVER
+#elif DRIVER_TYPE == ZL_DRIVER
+  // 禁止TPDO2
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x1801, 0x01, 0x80000280 + id);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
+          &read_data);
+  // 清空TPDO2映射
+  SdoWrite(number, can_id, WRITE_1_BYTE, 0x1A01, 0x00, 0x00);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
+          &read_data);
+  // 把左反馈速度(32bits)（6064:01）映射到1A01：01
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x1A01, 0x01, 0x60640120);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
+          &read_data);
+  // 把左反馈速度(32bits)（6064:02）映射到1A01：02
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x1A01, 0x02, 0x60640220);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
+          &read_data);
+  // 设置TPDO2的子索引数目为2，手册中1A01：00
+  SdoWrite(number, can_id, WRITE_1_BYTE, 0x1A01, 0x00, 0x02);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
+          &read_data);
+  // 设置TPDO2的传输方式为定时器触发
+  SdoWrite(number, can_id, WRITE_1_BYTE, 0x1801, 0x02, 0xFF);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
+          &read_data);
+  // 设置定时器时间为 n ms
+  SdoWrite(number, can_id, WRITE_2_BYTES, 0x1801, 0x05, SAMPLING_PERIOD * 2);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
+          &read_data);
+  // 使能TPDO2
+  SdoWrite(number, can_id, WRITE_4_BYTES, 0x1801, 0x01, 0x00000280 + id);
+  SdoRead(number, &read_can_id, &read_code, &read_index, &read_sub_index,
+          &read_data);
+#endif
+}
+
 void EnableRpdo1(const uint8_t number, const uint32_t can_id) {
   uint32_t read_can_id;
   uint8_t read_code;
@@ -340,14 +384,34 @@ void StartNode(const uint8_t number, const uint8_t node_id) {
   WriteData(number, 0, buffer, 2);
 }
 
-void GetRealtimeSpeed(const uint8_t number, int32_t *l_value,
-                      int32_t *r_value) {
+int GetRealtimeSpeed(const uint8_t number, const uint32_t id, int32_t *l_value,
+                     int32_t *r_value) {
   int32_t buffer[2];
   uint32_t can_id;
   uint8_t size;
   ReadData(number, &can_id, (uint8_t *)buffer, &size);
-  *l_value = buffer[0];
-  *r_value = buffer[1];
+  if (can_id == TPDO1_ID(id)) {
+    *l_value = buffer[0];
+    *r_value = buffer[1];
+    return 0;
+  }
+  return -1;
+}
+
+int GetRealtimePosition(const uint8_t number, const uint32_t id,
+                        int32_t *l_value, int32_t *r_value) {
+  int32_t buffer[2];
+  uint32_t can_id;
+  uint8_t size;
+  ReadData(number, &can_id, (uint8_t *)buffer, &size);
+  if (can_id == TPDO2_ID(id)) {
+    *l_value = buffer[0];
+    *r_value = buffer[1];
+    return 0;
+  }
+  *l_value = 0;
+  *r_value = 0;
+  return -1;
 }
 
 void GetSpeed(const uint8_t number, const uint32_t can_id, int32_t *l_value,

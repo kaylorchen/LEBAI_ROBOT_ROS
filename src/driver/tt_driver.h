@@ -12,7 +12,7 @@
 #define ZL_DRIVER 1
 #define DRIVER_TYPE ZL_DRIVER
 #define SDO_DELAY (1)
-#define SAMPLING_PERIOD (2)
+#define SAMPLING_PERIOD (1000)
 
 #if DRIVER_TYPE == TT_DRIVER
 #elif DRIVER_TYPE == ZL_DRIVER
@@ -91,6 +91,8 @@ void EnableRpdo1(const uint8_t number, const uint32_t can_id);
 
 void EnableTpdo1(const uint8_t number, const uint32_t can_id);
 
+void EnableTpdo2(const uint8_t number, const uint32_t can_id);
+
 #if DRIVER_TYPE == TT_DRIVER
 /**
  * 天太单位是 0.1rpm
@@ -134,8 +136,15 @@ void ClearError(const uint8_t number, const uint32_t can_id);
 
 /**
  * 通过TPDO1得到实时速度
-*/
-void GetRealtimeSpeed(const uint8_t number, int32_t *l_value, int32_t *r_value);
+ */
+int GetRealtimeSpeed(const uint8_t number, const uint32_t id, int32_t *l_value,
+                     int32_t *r_value);
+
+/**
+ * 通过TPDO2得到实时位置 
+ */
+int GetRealtimePosition(const uint8_t number, const uint32_t id,
+                        int32_t *l_value, int32_t *r_value);
 
 /**
  * 获取左右电机速度， 中菱的单位为 0.1rpm
