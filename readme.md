@@ -13,7 +13,7 @@ auto can0
 iface can0 inet manual
 pre-up busybox devmem 0x0c303000 32 0x0000C400
 pre-up busybox devmem 0x0c303008 32 0x0000C458
-pre-up ip link set can0 type can bitrate 500000
+pre-up ip link set can0 type can bitrate 500000 sample-point 0.87
 pre-up ip link set can0 type can restart-ms 1
 ```
 以上配置首先配置了Jetson的can接口的PIN，然后配置can接口的通信速率为500k，失效重启时间为1ms。
